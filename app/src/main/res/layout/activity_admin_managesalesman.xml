@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/nameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Name: "
+        android:padding="8dp"/>
+
+    <TextView
+        android:id="@+id/placeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Place: "
+        android:padding="8dp"/>
+
+    <TextView
+        android:id="@+id/addressTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Address: "
+        android:padding="8dp"/>
+
+    <TextView
+        android:id="@+id/genderTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gender: "
+        android:padding="8dp"/>
+
+    <TextView
+        android:id="@+id/usernameTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Username: "
+        android:padding="8dp"/>
+
+    <TextView
+        android:id="@+id/passwordTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Password: "
+        android:padding="8dp"/>
+
+    <Button
+        android:id="@+id/approveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Approve"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"/>
+</LinearLayout>
