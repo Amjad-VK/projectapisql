@@ -3,12 +3,16 @@ import 'dart:io';
 import 'package:apithai/pages/admin_home.dart';
 import 'package:apithai/pages/admin_viewuser.dart';
 import 'package:apithai/pages/img_view.dart';
+import 'package:apithai/pages/img_view_db.dart';
 import 'package:apithai/pages/login.dart';
+import 'package:apithai/pages/old.dart';
+import 'package:apithai/pages/sp.dart';
 import 'package:apithai/pages/user_homepage.dart';
 import 'package:apithai/pages/user_imgcapture.dart';
 import 'package:apithai/pages/user_registration.dart';
 import 'package:apithai/pages/user_sync.dart';
 import 'package:flutter/material.dart';
+
 
 void main() {
   HttpClient httpClient = new HttpClient();
@@ -24,7 +28,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
-        initialRoute: '/imgview',
+        initialRoute: '/',
         routes: {
           '/': (context) => const login_page(),
           '/adminhome': (context) => const adminhome_page(),
@@ -33,6 +37,9 @@ class MyApp extends StatelessWidget {
           '/userimgcap': (context) => const userimgcapture_page(),
            '/usersync': (context) => const usersync_page(),
              '/imgview': (context) => const img_upload(),
+             '/imgoff': (context) => const img_offline(),
+             '/tst': (context) =>  LocationDisplay(),
+                '/sp': (context) =>  stored_p(),
           
         });
   }

@@ -42,7 +42,9 @@ dependencies:
   flutter_internet_signal: ^0.0.30
   path_provider: ^2.1.1
   sqflite: ^2.3.0
-
+  location: ^5.0.3
+  flutter_map: ^6.0.1
+  background_fetch: ^1.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

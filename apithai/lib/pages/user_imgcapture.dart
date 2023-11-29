@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_literals_to_create_immutables, prefer_const_constructors
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,9 +8,12 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:location/location.dart';
 import 'sqlhelper.dart';
+import 'package:latlong2/latlong.dart';
 
 class userimgcapture_page extends StatefulWidget {
   const userimgcapture_page({super.key});
@@ -19,6 +23,18 @@ class userimgcapture_page extends StatefulWidget {
 }
 
 class _userimgcapture_pageState extends State<userimgcapture_page> {
+  // Location
+  double lat = 0;
+  double long = 0;
+  late Timer _timer;
+  late Timer _locationTimer;
+  LatLng initialCenter = LatLng(7, 8);
+  Location location = Location();
+  late bool _serviceEnabled;
+  late PermissionStatus _permissionGranted;
+  late LocationData _locationData;
+
+  int userId = 0;
 // Controllers
   var pname = TextEditingController();
   var shr1 = TextEditingController();
@@ -32,9 +48,22 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
   List<String> productNames = [];
   File? capturedImage; // Store the captured image
   late String imgdata;
-  Uint8List? decodedImage; 
+  Uint8List? decodedImage;
   bool isConnected = false; //connectionstatus
   Dio dio = Dio();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Retrieve the userId from the route arguments
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args != null) {
+      setState(() {
+        userId = args as int;
+      });
+    }
+  }
+
 // InternetStatus
   Future<bool> checkConnectionQuality() async {
     final connectivity = Connectivity();
@@ -45,10 +74,12 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
       setState(() {
         isConnected = true;
       });
+    } else {
+      print("Disconnected");
     }
 
     // The user has no internet connection.
-    print("Disconnected");
+
     return isConnected;
   }
 
@@ -108,42 +139,27 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
     }
   }
 
-  Future<List<Map<String, Object?>>> saveData() async {
+  Future<void> saveData() async {
     if (isConnected == true) {
       if (formkey.currentState!.validate()) {
-        print(pname.text);
-        print(selectedValue.toString());
-        print(selectedProduct.toString());
-
-        String productName = pname.text;
         int beforeAfterValue = selectedValue == 'Before' ? 0 : 1;
-        String selectedProductStr = selectedProduct.toString();
+        int sof1Value = shr1.text.isEmpty ? 0 : int.parse(shr1.text);
+        int sof2Value = shr2.text.isEmpty ? 0 : int.parse(shr2.text);
 
-        final dbHelper = DatabaseHelper();
-        final db = await dbHelper.database;
-        var data = {
-          'Id':10,
+        final data = {
+          'Id': userId.toString(),
           'Pname': pname.text,
           'Beforeafter': beforeAfterValue,
           'Product': selectedProduct,
-          'Sof1': shr1.text,
-          'Sof2': shr2.text,
-          'Images': imgdata
+          'Sof1': sof1Value,
+          'Sof2': sof2Value,
+          'Images': imgdata,
+          'Lat':lat.toString(),
+          'Long':long.toString()
         };
-        // await db.insert('offline_imgcap', data);
 
-        final tbdata = await dbHelper.getAllData();
-        for (var row in tbdata) {
-          print('id: ${row['id']}');
-          print('Pname: ${row['Pname']}');
-          print('B/F: ${row['Beforeafter']}');
-          print('Product: ${row['Product']}');
-          print('Sof1: ${row['Sof1']}');
-          print('Sof2: ${row['Sof1']}');
-          print('Image: ${row['Images']}');
-          print('-------------------');
-        }
         final dio = Dio();
+
         // Disable SSL certificate verification
         (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
           return HttpClient()
@@ -172,25 +188,151 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: Colors.greenAccent,
-                content: Text('You Are Registered'),
+                content: Text('Added to Main Database'),
               ),
             );
             // Navigator.pushNamed(context, '/');
             print('User added successfully');
+            Navigator.pop(context);
+            setState(() {});
           } else {
             print('Failed to add user: ${response.statusCode}');
           }
         } catch (e) {
           print('Error: $e');
         }
-        return tbdata;
       } else {
         throw Exception('Form validation failed');
       }
     } else {
-      throw Exception('No internet connection');
+      int beforeAfterValue = selectedValue == 'Before' ? 0 : 1;
+      final data = {
+        'Id': userId.toString(),
+        'Pname': pname.text,
+        'Beforeafter': beforeAfterValue,
+        'Product': selectedProduct,
+        'Sof1': shr1.text,
+        'Sof2': shr2.text,
+        'Images': imgdata,
+        'Lat':lat,
+        'Long':long
+      };
+      // No internet connection, store data in the local database
+      final dbHelper = DatabaseHelper();
+      final db = await dbHelper.database;
+      await db.insert('offline_imgcap', data);
+      print("addded to offline db");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.greenAccent,
+          content: Text('Added to Offline Database'),
+        ),
+      );
+
+      // View the data
+      final tbdata = await dbHelper.getAllData();
+      for (var row in tbdata) {
+        print('id: ${row['id']}');
+        print('Pname: ${row['Pname']}');
+        print('B/F: ${row['Beforeafter']}');
+        print('Product: ${row['Product']}');
+        print('Sof1: ${row['Sof1']}');
+        print('Sof2: ${row['Sof1']}');
+        print('Image: ${row['Images']}');
+         print('Lat: ${row['Lat']}');
+          print('Long: ${row['Long']}');
+        print('-------------------');
+      }
+      Navigator.pop(context);
+      setState(() {});
     }
   }
+
+  Future<void> checkLocationPermission() async {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    getLocationData();
+  }
+
+  Future<void> getLocationData() async {
+    _locationData = await location.getLocation();
+    setState(() {
+      lat = _locationData.latitude!;
+      long = _locationData.longitude!;
+    }); // Trigger a rebuild to display location data
+    print(lat.toString());
+  }
+
+  Future<void> _showMyDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          // title: const Text('AlertDialog Title'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Your Location'),
+                SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(lat, long),
+                        initialZoom: 16,
+                      ),
+                      children: [
+                        TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.app'),
+                        RichAttributionWidget(
+                          attributions: [
+                            TextSourceAttribution(
+                              'OpenStreetMap contributors',
+                              // onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')),
+                            ),
+                          ],
+                        )
+                      ]),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      saveData();
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Submit'))
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 
   // InitState
   @override
@@ -199,12 +341,14 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
     super.initState();
     makeRequest();
     checkConnectionQuality();
+    getLocationData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Text(userId.toString()),
         title: Text(isConnected ? "Connected" : "Disconnected"),
       ),
       body: Center(
@@ -306,15 +450,10 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
                 if (capturedImage != null)
                   Image.file(
                     capturedImage!,
-                    width: 50, // Set the width as needed
-                    height: 50, // Set the height as needed
+                    width: 100, // Set the width as needed
+                    height: 80, // Set the height as needed
                   ),
-                  if (decodedImage != null)
-                  Image.memory(
-                    decodedImage!,
-                    width: 50, // Set the width as needed
-                    height: 50, // Set the height as needed
-                  ),
+
                 SizedBox(
                   height: 15,
                 ),
@@ -322,7 +461,9 @@ class _userimgcapture_pageState extends State<userimgcapture_page> {
                     width: 150,
                     height: 50,
                     child: ElevatedButton(
-                        onPressed: saveData,
+                        onPressed: () {
+                          _showMyDialog();
+                        },
                         child: Text(
                           'Save',
                           style: TextStyle(fontSize: 20),

@@ -35,7 +35,9 @@ class DatabaseHelper {
         Product TEXT,
         Sof1 INTEGER,
         Sof2 INTEGER,
-        Images TEXT
+        Images TEXT,
+        Lat TEXT,
+        Long TEXT
       )
     ''');
   }
