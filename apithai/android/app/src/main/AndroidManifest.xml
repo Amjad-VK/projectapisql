@@ -9,6 +9,10 @@
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<!-- This too -->
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
 
 
@@ -17,6 +21,13 @@
         android:label="apithai"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+<!-- THIS FOR BG SERVICE -->
+        <provider
+    android:name="androidx.work.impl.WorkManagerInitializer"
+    android:authorities="${applicationId}.workmanager-init"
+    android:enabled="false"
+    android:exported="false" />
 
         
    <!-- TODO: Add your Google Maps API key here -->

@@ -44,7 +44,12 @@ dependencies:
   sqflite: ^2.3.0
   location: ^5.0.3
   flutter_map: ^6.0.1
-  background_fetch: ^1.2.1
+  workmanager: ^0.5.2
+  geolocator: ^10.1.0
+  permission_handler: ^11.1.0
+  flutter_local_notifications: ^16.2.0
+  # flutter_background_service: ^5.0.4
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
